@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "discord-html-transcripts": "^3.1.4",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.1.4"
+  },
+  "name": "kurokami-v2",
+  "version": "2.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "kdumr",
+  "license": "ISC",
+  "description": "Versão 2 do BOT 'kurokami'."
+}
