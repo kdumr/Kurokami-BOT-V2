@@ -21,19 +21,19 @@ module.exports = {
                 .setPlaceholder("Clique aqui!")
                 .setOptions(
                     {
-                        label: "Opção 1",
-                        description: "Abra um ticket na opção 1.",
-                        value: "opc1"
+                        label: "Suporte",
+                        description: "Abra esse ticket se precisar de alguma ajuda .",
+                        value: "suporte"
                     },
                     {
-                        label: "Opção 2",
+                        label: "Dúvidas",
                         description: "Abra um ticket na opção 2.",
-                        value: "opc2"
+                        value: "duvidas"
                     },
                     {
-                        label: "Opção 3",
+                        label: "Denúncias",
                         description: "Abra um ticket na opção 3.",
-                        value: "opc3"
+                        value: "denuncias"
                     }
                 )
             );
