@@ -1,52 +1,10 @@
-const Discord = require("discord.js")
+require('../index')
 
-const config = require("./config.json")
-const roleSupID = config.roleSupID
+const Discord = require('discord.js')
+const client = require('../index')
+const { QuickDB } = require("quick.db")
+const db = new QuickDB()
 
-const dotenv = require('dotenv')
-dotenv.config()
-const { TOKEN, CLIENT_ID } = process.env
-
-const client = new Discord.Client({
-    intents: [
-        Discord.GatewayIntentBits.Guilds
-    ]
-});
-
-module.exports = client
-
-//Cooldown
-const cooldown = new Set();
-//Digite quando minutos deseja de cooldown. Exemplo: cooldown = 5 (minutos)
-let cooldownTimeMin = 5;
-const cooldownTime = cooldownTimeMin * 300000
-
-client.on('interactionCreate', (interaction) => {
-
-    if (interaction.type === Discord.InteractionType.ApplicationCommand) {
-
-        const cmd = client.slashCommands.get(interaction.commandName);
-
-        // Mostra um erro se o comando não existir
-        if (!cmd) return interaction.reply({ content: 'Esse comando não existe!', ephemeral: true });
-
-        interaction["member"] = interaction.guild.members.cache.get(interaction.user.id);
-        // Verifica se o usuário tem a permissão específica
-        if (interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)) {
-          // Define a permissão do comando como true (visível)
-          cmd.defaultPermission = true;
-      }
-
-        cmd.run(client, interaction)
-    }
-})
-
-client.on('ready', () => {
-    console.log("[Kurokami] - Iniciado!")
-})
-const suporte = "Suporte"
-const duvidas = "Dúvidas"
-const denuncias = "Denúncias"
 function handleTicket(interaction, category) {
     
     interaction.message.edit()
@@ -69,6 +27,7 @@ function handleTicket(interaction, category) {
         .create({
           name: nome,
           type: Discord.ChannelType.GuildText,
+          topic: category,
           parent: categoria,
           permissionOverwrites: [
             {
@@ -99,7 +58,10 @@ function handleTicket(interaction, category) {
             .setDescription(
               `✅ | Olá ${interaction.user}, seu ticket foi aberto com sucesso!`
             );
-          console.log(ch.id);
+            
+          db.set(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
+          console.log(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
+          
           let showChannelButton = new Discord.ActionRowBuilder().addComponents(
             new Discord.ButtonBuilder()
               .setLabel("👁️ Visualizar atendimento")
@@ -154,6 +116,9 @@ function handleTicket(interaction, category) {
         });
     }
   }
+const suporte = "🗣️ Suporte"
+const duvidas = "❓ Dúvidas"
+const denuncias = "🚨 Denúncias"
 client.on("interactionCreate", async(interaction) => {
     if (interaction.isStringSelectMenu()) {
         if (interaction.customId === "painel_ticket") {
@@ -165,6 +130,7 @@ client.on("interactionCreate", async(interaction) => {
             }else if (opc === "denuncias") {
                 handleTicket(interaction, denuncias);
             }
+            
         }
     } else if (interaction.isButton()) {
           if (interaction.customId === "notification_button") {
@@ -223,51 +189,73 @@ client.on("interactionCreate", async(interaction) => {
             interaction.channel.permissionOverwrites.delete(interaction.member.id);
 
         } else if (interaction.customId === "close_ticket"){
-            if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.ManageGuild)){
+            //if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.ManageGuild)){
               const modalCloseTicket = new Discord.ModalBuilder()
               .setCustomId("modalCloseTicket")
               .setTitle("Fechar ticket")
 
-              const text1 = new Discord.TextInputBuilder()
-              .setCustomId("text1")
+              const textLabel1 = new Discord.TextInputBuilder()
+              .setCustomId("textLabel1")
               .setLabel("Conclusão do ticket:")
               .setMaxLength(30)
-              .setMaxLength(3)
+              .setMinLength(3)
               .setPlaceholder("Digite aqui a conclusão do ticket! Exemplo: Resolvido.")
               .setRequired(true)
               .setStyle(Discord.TextInputStyle.Short)
 
-              const text2 = new Discord.TextInputBuilder()
-              .setCustomId("text2")
-              .setLabel("Considerações finais:")
+              const textLabel2 = new Discord.TextInputBuilder()
+              .setCustomId("textLabel2")
+              .setLabel("Observações:")
               .setPlaceholder("Digite aqui.")
-              .setRequired(true)
+              .setRequired(false)
               .setStyle(Discord.TextInputStyle.Paragraph)
 
               modalCloseTicket.addComponents(
-                new Discord.ActionRowBuilder().addComponents(text1),
-                new Discord.ActionRowBuilder().addComponents(text2)
+                new Discord.ActionRowBuilder().addComponents(textLabel1),
+                new Discord.ActionRowBuilder().addComponents(textLabel2)
               )
               await interaction.showModal(modalCloseTicket)
+          } 
+            
+     } else if (interaction.isModalSubmit()) {
+        if (interaction.customId === "modalCloseTicket") {
+          let dbAutor = await db.get(`autorTicket_${interaction.guild.id}_${interaction.channelId}`)
+          let text1 = interaction.fields.getTextInputValue('textLabel1');
+          let text2 = interaction.fields.getTextInputValue('textLabel2');
 
-              interaction.reply(`Olá ${interaction.user}, este ticket será excluído em 5 segundos...`)
-              setTimeout ( () => {
-                try {
-                  interaction.channel.delete()
-                } catch (e) {
-                  return;
-                }
-              }, 5000)
-            } else {
-              interaction.reply({ content: "❌ Você não tem permissão para fechar o ticket.", ephemeral: true})
+          let embedCloseTicket = new Discord.EmbedBuilder()
+          .setTitle("✅ Ticket finalizado!")
+          .addFields(
+            //db.set(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
+            {
+              name: "**Autor do ticket:**",
+              value: `<@${dbAutor}>`,
+              inline: true
+            },
+            {
+              name: "**Categoria:**",
+              value: `${interaction.channel.topic}`,
+              inline: true
+            },
+            {
+              name: "**Conclusão do ticket:**",
+              value: `${text1}`,
+              inline: false
             }
+          )
+          if (text2 != "") {
+            embedCloseTicket.addFields(
+              {
+                name: "Observações",
+                value: `${text2}`,
+                inline: false
+              }
+              );
           }
-      }
-    }
-);
-
-client.slashCommands = new Discord.Collection()
-
-require('./handler')(client)
-
-client.login(TOKEN)
+          await interaction.user.send({ embeds: [embedCloseTicket] })
+          interaction.reply({ content: "> ✅ Ticket finalizado!"})
+          await interaction.channel.delete()
+          await db.delete(`autorTicket_${interaction.guild.id}_${interaction.channelId}`)
+        }
+}
+});
