@@ -2,6 +2,7 @@ require('../index')
 
 const Discord = require('discord.js')
 const client = require('../index')
+const transcript = require('discord-html-transcripts')
 const { QuickDB } = require("quick.db")
 const db = new QuickDB()
 
@@ -252,7 +253,18 @@ client.on("interactionCreate", async(interaction) => {
               }
               );
           }
-          await interaction.user.send({ embeds: [embedCloseTicket] })
+          const canalTranscript = interaction.channel
+
+          const attachment = await transcript.createTranscript(canalTranscript,
+            {
+                limit: -1, // Quantidade máxima de mensagens a serem buscadas. `-1` busca recursivamente.
+                returnType: 'attachment', // Opções válidas: 'buffer' | 'string' | 'attachment' Padrão: 'attachment' OU use o enum ExportReturnType
+                filename: `${canalTranscript.name}.html`, // Válido apenas com returnType é 'attachment'. Nome do anexo.
+                saveImages: true, // Baixe todas as imagens e inclua os dados da imagem no HTML (permite a visualização da imagem mesmo depois de deletada) (! VAI AUMENTAR O TAMANHO DO ARQUIVO!)
+                footerText: 'Foram exportadas {number} mensagens!', // Altere o texto no rodapé, não se esqueça de colocar {number} para mostrar quantas mensagens foram exportadas e {s} para plural
+                poweredBy: true // Se deve incluir o rodapé "Powered by discord-html-transcripts"
+            })
+          await interaction.user.send({ embeds: [embedCloseTicket], files: [attachment] })
           interaction.reply({ content: "> ✅ Ticket finalizado!"})
           await interaction.channel.delete()
           await db.delete(`autorTicket_${interaction.guild.id}_${interaction.channelId}`)
