@@ -53,7 +53,8 @@ client.on('guildCreate', async (guild) => {
     const newServer = new serverSchema({
       serverId: guild.id,
       serverName: guild.name,
-      categoryTicket: null
+      categoryTicket: null,
+      roleSupID: null
     });
   
     await newServer.save();

@@ -14,6 +14,10 @@ const serverSchema = new Schema({
     type: String,
     required: false,
   },
+    roleSupID: {
+    type: String,
+    required: false,
+  }
 });
 
 module.exports = model("serverSchema", serverSchema);
