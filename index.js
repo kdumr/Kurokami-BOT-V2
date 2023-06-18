@@ -1,6 +1,9 @@
 const Discord = require("discord.js")
 const { QuickDB } = require("quick.db")
-const db = new QuickDB()
+//const db = new QuickDB()
+const db = require('mongoose');
+//const db = require("./Events/registerDB")
+const serverSchema = require("./Schemas/serverSchema");
 
 const config = require("./config.json")
 const roleSupID = config.roleSupID
@@ -43,10 +46,44 @@ client.on('interactionCreate', (interaction) => {
     }
 })
 
-client.on('ready', () => {
+client.on('guildCreate', async (guild) => {
+  console.log(`Novo servidor adicionado: ${guild.name}`);
+  try {
+    //const db = client.db('test');
+    const newServer = new serverSchema({
+      serverId: guild.id,
+      serverName: guild.name,
+      categoryTicket: null
+    });
+  
+    await newServer.save();
+    
+    
+    } catch (error) {
+      console.error('[Database] -> Erro ao adicionar novo servidor:', error);
+    }
+  console.log("[Database] -> Adicionado no servidor: ", guild.name)
+})
+
+client.on('ready', async () => {
+  
     console.log("[Kurokami] - Iniciado!")
 })
 
+client.on('guildMemberAdd', async (member) => {
+  try {
+    // Encontre o documento do servidor correspondente no banco de dados
+    const server = await Server.findOne({ serverId: member.guild.id });
+
+    if (server) {
+      // Adicione o novo membro à lista de membros do servidor
+      server.members.push(member.id);
+      await server.save();
+    }
+  } catch (error) {
+    console.error('Erro ao adicionar membro:', error);
+  }
+});
 
 client.slashCommands = new Discord.Collection()
 

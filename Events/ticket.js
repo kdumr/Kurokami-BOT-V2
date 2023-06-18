@@ -3,119 +3,133 @@ require('../index')
 const Discord = require('discord.js')
 const client = require('../index')
 const transcript = require('discord-html-transcripts')
+const serverSchema = require("../Schemas/serverSchema");
 const { QuickDB } = require("quick.db")
 const db = new QuickDB()
 
-function handleTicket(interaction, category) {
+async function handleTicket(interaction, category) {
     
     interaction.message.edit()
+    const serverId = interaction.guild.id;
     const nome = `📨-${interaction.user.id}`;
-    const categoria = "1117978267417325609"; // Coloque o ID da categoria
-  
-    if (!interaction.guild.channels.cache.get(categoria)) {
-      categoria = null;
-    }
-  
-    if (interaction.guild.channels.cache.find((c) => c.name === nome)) {
-      interaction.reply({
-        content: `❌ Você já possui um ticket aberto em ${interaction.guild.channels.cache.find(
-          (c) => c.name === nome
-        )}!`,
-        ephemeral: true,
-      });
-    } else {
-      interaction.guild.channels
-        .create({
-          name: nome,
-          type: Discord.ChannelType.GuildText,
-          topic: category,
-          parent: categoria,
-          permissionOverwrites: [
-            {
-              id: interaction.guild.id,
-              deny: [
-                Discord.PermissionFlagsBits.ViewChannel,
-                Discord.PermissionFlagsBits.SendMessages,
-                Discord.PermissionFlagsBits.AttachFiles,
-                Discord.PermissionFlagsBits.EmbedLinks,
-                Discord.PermissionFlagsBits.AddReactions,
-              ],
-            },
-            {
-              id: interaction.user.id,
-              allow: [
-                Discord.PermissionFlagsBits.ViewChannel,
-                Discord.PermissionFlagsBits.SendMessages,
-                Discord.PermissionFlagsBits.AttachFiles,
-                Discord.PermissionFlagsBits.EmbedLinks,
-                Discord.PermissionFlagsBits.AddReactions,
-              ],
-            },
-          ],
-        })
-        .then((ch) => {
-          let embedSucess = new Discord.EmbedBuilder()
-            .setColor("Random")
-            .setDescription(
-              `✅ | Olá ${interaction.user}, seu ticket foi aberto com sucesso!`
-            );
-            
-          db.set(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
-          console.log(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
-          
-          let showChannelButton = new Discord.ActionRowBuilder().addComponents(
-            new Discord.ButtonBuilder()
-              .setLabel("👁️ Visualizar atendimento")
-              .setURL(`https://discord.com/channels/${interaction.guild.id}/${ch.id}`)
-              .setStyle(Discord.ButtonStyle.Link)
-          );
-          interaction.reply({
-            embeds: [embedSucess],
-            components: [showChannelButton],
-            ephemeral: true,
-          });
-  
-          let embed = new Discord.EmbedBuilder()
-            .setColor("#58b9ff")
-            .setThumbnail("https://i.imgur.com/qqoNtND.png")
-            .setTitle("Central de atendimento")
-            .setDescription(`ℹ️ Olá ${interaction.user}, tente ser o mais breve e específico possível para que possamos te fornecer o melhor atendimento.`)
-            .addFields(
-                { name: '> **Categoria do atendimento**', value: `**\`\`\`fix\n${category}\n\`\`\`** `, inline: true },
-                { name: '> **Aberto por:**', value: `${interaction.user}`, inline: true },
-            )
-          let notificationButton = new Discord.ButtonBuilder()
-            .setCustomId("notification_button")
-            .setLabel("🔔 Notificar equipe")
-            .setStyle(Discord.ButtonStyle.Primary);
-  
-          let leaveButton = new Discord.ButtonBuilder()
-            .setCustomId("leave_button")
-            .setLabel("🚪 Sair do ticket")
-            .setStyle(Discord.ButtonStyle.Secondary);
-  
-          let admMenu = new Discord.ButtonBuilder()
-            .setCustomId("admmenu_button")
-            .setLabel("⚙️ Menu Administração")
-            .setStyle(Discord.ButtonStyle.Secondary);
-  
-          let closeButton = new Discord.ButtonBuilder()
-            .setCustomId("close_ticket")
-            .setLabel("🔒 Fechar Ticket")
-            .setStyle(Discord.ButtonStyle.Danger);
-  
-          const rowButton = new Discord.ActionRowBuilder().addComponents(
-            notificationButton,
-            leaveButton,
-            admMenu,
-            closeButton
-          );
-  
-          ch.send({ embeds: [embed], components: [rowButton] }).then((m) => {
-            m.pin();
-          });
+    const filter = { serverId };
+    const server = await serverSchema.findOne(filter);
+
+    if (server && server.categoryTicket !== null && server.categoryTicket !== undefined && interaction.guild.channels.cache.get(server.categoryTicket) !== undefined) {
+      const categoryTicket = server.categoryTicket;
+      console.log('Valor da categoriaTicket:', categoryTicket);
+      const categoria = server.categoryTicket; // Coloque o ID da categoria
+      if (interaction.guild.channels.cache.find((c) => c.name === nome)) {
+        interaction.reply({
+          content: `❌ Você já possui um ticket aberto em ${interaction.guild.channels.cache.find(
+            (c) => c.name === nome
+          )}!`,
+          ephemeral: true,
         });
+      } else {
+        interaction.guild.channels
+          .create({
+            name: nome,
+            type: Discord.ChannelType.GuildText,
+            topic: category,
+            parent: categoria,
+            permissionOverwrites: [
+              {
+                id: interaction.guild.id,
+                deny: [
+                  Discord.PermissionFlagsBits.ViewChannel,
+                  Discord.PermissionFlagsBits.SendMessages,
+                  Discord.PermissionFlagsBits.AttachFiles,
+                  Discord.PermissionFlagsBits.EmbedLinks,
+                  Discord.PermissionFlagsBits.AddReactions,
+                ],
+              },
+              {
+                id: interaction.user.id,
+                allow: [
+                  Discord.PermissionFlagsBits.ViewChannel,
+                  Discord.PermissionFlagsBits.SendMessages,
+                  Discord.PermissionFlagsBits.AttachFiles,
+                  Discord.PermissionFlagsBits.EmbedLinks,
+                  Discord.PermissionFlagsBits.AddReactions,
+                ],
+              },
+            ],
+          })
+          .then((ch) => {
+            let embedSucess = new Discord.EmbedBuilder()
+              .setColor("Random")
+              .setDescription(
+                `✅ | Olá ${interaction.user}, seu ticket foi aberto com sucesso!`
+              );
+              
+            db.set(`autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
+            db.set(`idChannel_${interaction.guild.id}_${interaction.member.id}`, ch.id)
+            console.log(`DB set: autorTicket_${interaction.guild.id}_${ch.id}`, interaction.member.id)
+            console.log(`DB set: idChannel_${interaction.guild.id}_${interaction.member.id}`, ch.id)
+
+            let showChannelButton = new Discord.ActionRowBuilder().addComponents(
+              new Discord.ButtonBuilder()
+                .setLabel("👁️ Visualizar atendimento")
+                .setURL(`https://discord.com/channels/${interaction.guild.id}/${ch.id}`)
+                .setStyle(Discord.ButtonStyle.Link)
+            );
+            interaction.reply({
+              embeds: [embedSucess],
+              components: [showChannelButton],
+              ephemeral: true,
+            });
+    
+            let embed = new Discord.EmbedBuilder()
+              .setColor("#58b9ff")
+              .setThumbnail("https://i.imgur.com/qqoNtND.png")
+              .setTitle("Central de atendimento")
+              .setDescription(`ℹ️ Olá ${interaction.user}, tente ser o mais breve e específico possível para que possamos te fornecer o melhor atendimento.`)
+              .addFields(
+                  { name: '> **Categoria do atendimento**', value: `**\`\`\`fix\n${category}\n\`\`\`** `, inline: true },
+                  { name: '> **Aberto por:**', value: `${interaction.user}`, inline: true },
+              )
+            let notificationButton = new Discord.ButtonBuilder()
+              .setCustomId("notification_button")
+              .setLabel("🔔 Notificar equipe")
+              .setStyle(Discord.ButtonStyle.Primary);
+    
+            let leaveButton = new Discord.ButtonBuilder()
+              .setCustomId("leave_button")
+              .setLabel("🚪 Sair do ticket")
+              .setStyle(Discord.ButtonStyle.Secondary);
+    
+            let admMenu = new Discord.ButtonBuilder()
+              .setCustomId("admmenu_button")
+              .setLabel("⚙️ Menu Administração")
+              .setStyle(Discord.ButtonStyle.Secondary);
+    
+            let closeButton = new Discord.ButtonBuilder()
+              .setCustomId("close_ticket")
+              .setLabel("🔒 Fechar Ticket")
+              .setStyle(Discord.ButtonStyle.Danger);
+    
+            const rowButton = new Discord.ActionRowBuilder().addComponents(
+              notificationButton,
+              leaveButton,
+              admMenu,
+              closeButton
+            );
+    
+            ch.send({ embeds: [embed], components: [rowButton] }).then((m) => {
+              m.pin();
+            });
+          });
+      }
+    } else {
+      interaction.reply({ content: `> ❌ Ocorreu um erro ao tentar abrir o ticket!`, ephemeral: true})
+      if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)){
+        IntersectionObserver.reply({ content: `> ❌ Não existe nenhuma categoria definida para armazenar os tickets!\n> ❗ Digite o comando \`/criarcategoria\`.` })
+      }
+
+      console.log('O servidor não foi encontrado no banco de dados.');
     }
+    
   }
 const suporte = "🗣️ Suporte"
 const duvidas = "❓ Dúvidas"
@@ -188,7 +202,7 @@ client.on("interactionCreate", async(interaction) => {
             interaction.channel.send({ embeds: [leaveEmbed] });
             interaction.reply({ content: "Você saiu do ticket!", ephemeral: true})
             interaction.channel.permissionOverwrites.delete(interaction.member.id);
-
+        
         } else if (interaction.customId === "close_ticket"){
             //if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.ManageGuild)){
               const modalCloseTicket = new Discord.ModalBuilder()
@@ -216,8 +230,21 @@ client.on("interactionCreate", async(interaction) => {
                 new Discord.ActionRowBuilder().addComponents(textLabel2)
               )
               await interaction.showModal(modalCloseTicket)
-          } 
-            
+          } else if (interaction.customId === "transcript_button") {
+            let dbChannel = await db.get(`idChannel_${interaction.guild.id}_${interaction.member.id}`)
+            const canalTranscript = dbChannel
+  
+            const attachment = await transcript.createTranscript(canalTranscript,
+              {
+                  limit: -1, // Quantidade máxima de mensagens a serem buscadas. `-1` busca recursivamente.
+                  returnType: 'attachment', // Opções válidas: 'buffer' | 'string' | 'attachment' Padrão: 'attachment' OU use o enum ExportReturnType
+                  filename: `${canalTranscript.name}.html`, // Válido apenas com returnType é 'attachment'. Nome do anexo.
+                  saveImages: true, // Baixe todas as imagens e inclua os dados da imagem no HTML (permite a visualização da imagem mesmo depois de deletada) (! VAI AUMENTAR O TAMANHO DO ARQUIVO!)
+                  footerText: 'Foram exportadas {number} mensagens!', // Altere o texto no rodapé, não se esqueça de colocar {number} para mostrar quantas mensagens foram exportadas e {s} para plural
+                  poweredBy: true // Se deve incluir o rodapé "Powered by discord-html-transcripts"
+              })
+            interaction.user.send({ files: [attachment] })
+        } 
      } else if (interaction.isModalSubmit()) {
         if (interaction.customId === "modalCloseTicket") {
           let dbAutor = await db.get(`autorTicket_${interaction.guild.id}_${interaction.channelId}`)
@@ -253,21 +280,19 @@ client.on("interactionCreate", async(interaction) => {
               }
               );
           }
-          const canalTranscript = interaction.channel
+          let sendTranscript = new Discord.ButtonBuilder()
+          .setCustomId("transcript_button")
+          .setLabel("📓 Transcript")
+          .setStyle(Discord.ButtonStyle.Secondary);
 
-          const attachment = await transcript.createTranscript(canalTranscript,
-            {
-                limit: -1, // Quantidade máxima de mensagens a serem buscadas. `-1` busca recursivamente.
-                returnType: 'attachment', // Opções válidas: 'buffer' | 'string' | 'attachment' Padrão: 'attachment' OU use o enum ExportReturnType
-                filename: `${canalTranscript.name}.html`, // Válido apenas com returnType é 'attachment'. Nome do anexo.
-                saveImages: true, // Baixe todas as imagens e inclua os dados da imagem no HTML (permite a visualização da imagem mesmo depois de deletada) (! VAI AUMENTAR O TAMANHO DO ARQUIVO!)
-                footerText: 'Foram exportadas {number} mensagens!', // Altere o texto no rodapé, não se esqueça de colocar {number} para mostrar quantas mensagens foram exportadas e {s} para plural
-                poweredBy: true // Se deve incluir o rodapé "Powered by discord-html-transcripts"
-            })
-          await interaction.user.send({ embeds: [embedCloseTicket], files: [attachment] })
+          const rowButton = new Discord.ActionRowBuilder().addComponents(
+            sendTranscript,
+          );
+          
+          await interaction.user.send({ embeds: [embedCloseTicket], components: [rowButton]})
           interaction.reply({ content: "> ✅ Ticket finalizado!"})
           await interaction.channel.delete()
           await db.delete(`autorTicket_${interaction.guild.id}_${interaction.channelId}`)
-        }
+      }
 }
 });

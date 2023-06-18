@@ -22,17 +22,17 @@ module.exports = {
                 .setOptions(
                     {
                         label: "Suporte",
-                        description: "Abra esse ticket se precisar de alguma ajuda .",
+                        description: "Abra esse ticket se precisar de alguma ajuda.",
                         value: "suporte"
                     },
                     {
                         label: "Dúvidas",
-                        description: "Abra um ticket na opção 2.",
+                        description: "Abra esse ticket caso tenho alguma dúvida.",
                         value: "duvidas"
                     },
                     {
                         label: "Denúncias",
-                        description: "Abra um ticket na opção 3.",
+                        description: "Abra esse ticket para denunciar algo..",
                         value: "denuncias"
                     }
                 )

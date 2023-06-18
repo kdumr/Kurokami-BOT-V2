@@ -13,16 +13,12 @@ module.exports = {
             color = "Green"
         }
 
-        let embed_1 = new Discord.EmbedBuilder()
-            .setAuthor({ name: client.user.username, iconURL: client.user.displayAvatarURL({ dynamic: true }) })
-            .setDescription("Calculando...")
-            .setColor("Yellow")
-
         let embed_2 = new Discord.EmbedBuilder()
             .setAuthor({ name: client.user.username, iconURL: client.user.displayAvatarURL({ dynamic: true }) })
             .setDescription(`Olá ${interaction.user}, meu ping está em \`${ping} ms\`.`)
             .setColor(color)
-        interaction.reply({ embeds: [embed_1 ] }).then( () => {
+
+        await interaction.deferReply().then( () => {
             setTimeout( () => {
                 interaction.editReply({ embeds: [embed_2] })
             }, 2000)
