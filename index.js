@@ -3,7 +3,7 @@ const { QuickDB } = require("quick.db")
 //const db = new QuickDB()
 const db = require('mongoose');
 //const db = require("./Events/registerDB")
-const serverSchema = require("./Schemas/serverSchema");
+const { Server, Ticket } = require("./Schemas/serverSchema");
 
 const config = require("./config.json")
 const roleSupID = config.roleSupID
@@ -47,10 +47,11 @@ client.on('interactionCreate', (interaction) => {
 })
 
 client.on('guildCreate', async (guild) => {
+  
   console.log(`Novo servidor adicionado: ${guild.name}`);
   try {
     //const db = client.db('test');
-    const newServer = new serverSchema({
+    const newServer = new Server({
       serverId: guild.id,
       serverName: guild.name,
       categoryTicket: null,

@@ -15,13 +15,17 @@ async function handleTicket(interaction, category) {
     const filter = { serverId };
     const server = await serverSchema.findOne(filter);
 
+    // Verifica se a categoria "TICKETS" existe no discord e no database
     if (server && server.categoryTicket !== null && server.categoryTicket !== undefined && interaction.guild.channels.cache.get(server.categoryTicket) !== undefined) {
+      // Verificar se o cargo "Suporte" existe no discord e no database
       if (!server && server.roleSupID === null && server.roleSupID === undefined && interaction.guild.roles.cache.find(server.roleSupID) === undefined) {
         interaction.reply({ content: `> ❌ Ocorreu um erro ao tentar abrir o ticket!`, ephemeral: true })
-        if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)){
-          interaction.reply({ content: `> ❌ O cargo **Suporte** não existe!`})
+        // Envia esta mensagem somente para quem tem permissão de administrador do servidor
+        if(interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)){
+          interaction.followUp({ content: `> ❌ O cargo **Suporte** não existe!\n> ❗ Digite o comando \`/ticketsetup cargo\`.`, ephemeral: true })
         }
       } else{
+        
         const categoryTicket = server.categoryTicket;
         console.log('Valor da categoriaTicket:', categoryTicket);
         const categoria = server.categoryTicket; // Coloque o ID da categoria
@@ -130,12 +134,11 @@ async function handleTicket(interaction, category) {
           }
       }
     } else {
-      interaction.reply({ content: `> ❌ Ocorreu um erro ao tentar abrir o ticket!`, ephemeral: true})
-      if(interaction.member.roles.cache.has(roleSupID) || interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)){
-        interaction.reply({ content: `> ❌ Não existe nenhuma categoria definida para armazenar os tickets!\n> ❗ Digite o comando \`/criarcategoria\`.` })
+      await interaction.reply({ content: `> ❌ Ocorreu um erro ao tentar abrir o ticket!`, ephemeral: true})
+      if(interaction.member.permissions.has(Discord.PermissionFlagsBits.Administrator)){
+        interaction.followUp({ content: `> ❌ Não existe nenhuma categoria definida para armazenar os tickets!\n> ❗ Digite o comando \`/ticketsetup categoria\`.`, ephemeral: true})
       }
-
-      console.log('O servidor não foi encontrado no banco de dados.');
+      console.log(`[LOG] -> [${interaction.guild.name}] O servidor não foi encontrado no banco de dados.`);
     }
     
   }
